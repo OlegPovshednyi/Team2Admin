@@ -289,6 +289,7 @@ namespace BlitzMall_Backend.Services
             var total = await q.CountAsync();
 
             var items = await q
+                .OrderBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new ProductDto
