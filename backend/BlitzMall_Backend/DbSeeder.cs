@@ -57,10 +57,6 @@ namespace BlitzMall_Backend
                 }
             }
 
-            // Do not duplicate demo products if they already exist.
-            if (await db.Products.AnyAsync())
-                return;
-
             var brands = new[]
             {
                 "Sony",
@@ -74,17 +70,22 @@ namespace BlitzMall_Backend
 
             foreach (var brandName in brands)
             {
-                db.Brands.Add(new Brand
+                if (!await db.Brands.AnyAsync(b => b.Name == brandName))
                 {
-                    Name = brandName,
-                    Description = brandName
-                });
+                    db.Brands.Add(new Brand
+                    {
+                        Name = brandName,
+                        Description = brandName
+                    });
+                }
             }
 
             await db.SaveChangesAsync();
 
             var brandDict = await db.Brands
-                .ToDictionaryAsync(b => b.Name!, b => b.Id);
+                .Where(b => brands.Contains(b.Name!))
+                .GroupBy(b => b.Name!)
+                .ToDictionaryAsync(g => g.Key, g => g.First().Id);
 
             var categories = new[]
             {
@@ -99,17 +100,22 @@ namespace BlitzMall_Backend
 
             foreach (var (name, description) in categories)
             {
-                db.Categories.Add(new Category
+                if (!await db.Categories.AnyAsync(c => c.Name == name))
                 {
-                    Name = name,
-                    Description = description
-                });
+                    db.Categories.Add(new Category
+                    {
+                        Name = name,
+                        Description = description
+                    });
+                }
             }
 
             await db.SaveChangesAsync();
 
             var categoryDict = await db.Categories
-                .ToDictionaryAsync(c => c.Name!, c => c.Id);
+                .Where(c => categories.Select(x => x.Item1).Contains(c.Name!))
+                .GroupBy(c => c.Name!)
+                .ToDictionaryAsync(g => g.Key, g => g.First().Id);
 
             // The seeded store needs a user.
             // Prefer the configured admin account.
@@ -251,6 +257,10 @@ namespace BlitzMall_Backend
                     ImgUrl = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=400&fit=crop"
                 }
             };
+
+            // Do not duplicate demo products if they already exist.
+            if (await db.Products.AnyAsync())
+                return;
 
             foreach (var productData in products)
             {
