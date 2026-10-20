@@ -57,10 +57,6 @@ namespace BlitzMall_Backend
                 }
             }
 
-            // Do not duplicate demo products if they already exist.
-            if (await db.Products.AnyAsync())
-                return;
-
             var brands = new[]
             {
                 "Sony",
@@ -261,6 +257,10 @@ namespace BlitzMall_Backend
                     ImgUrl = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&h=400&fit=crop"
                 }
             };
+
+            // Do not duplicate demo products if they already exist.
+            if (await db.Products.AnyAsync())
+                return;
 
             foreach (var productData in products)
             {
